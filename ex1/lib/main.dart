@@ -175,7 +175,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                         child: TextField(
                           controller: totalController,
-                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(labelText: "Valor Total (R\$)"),
                         ),
                       ),
@@ -183,7 +182,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                         child: TextField(
                           controller: entradaController,
-                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(labelText: "Entrada (R\$)"),
                         ),
                       ),
@@ -195,7 +193,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                         child: TextField(
                           controller: jurosController,
-                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(labelText: "Juros (%)"),
                         ),
                       ),
@@ -203,7 +200,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                         child: TextField(
                           controller: parcelasController,
-                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(labelText: "Parcelas"),
                         ),
                       ),

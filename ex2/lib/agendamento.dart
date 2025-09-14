@@ -2,8 +2,8 @@ import 'item.dart';
 
 class Agendamento {
   String? clienteNome;
-  String? clienteTelefone;
   String? clienteEndereco;
+  String? clienteTelefone;
   String? veiculoModelo;
   String? veiculoPlaca;
   DateTime? dataHora;
@@ -13,7 +13,7 @@ class Agendamento {
 
   List<Item>? servicos;
 
-  Agendamento(this.clienteNome, this.clienteTelefone, this.clienteEndereco,
+  Agendamento(this.clienteNome, this.clienteEndereco, this.clienteTelefone,
               this.veiculoModelo, this.veiculoPlaca, this.dataHora, this.valorTotal,
               this.recebido, this.cancelado, this.servicos);
 }
