@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Exercicio 1 da Prova 1',
+      title: 'Simulador Financiamento',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -35,25 +35,103 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController jurosController = TextEditingController();
   TextEditingController parcelasController = TextEditingController();
   TextEditingController dataController = TextEditingController();
-  DateTime? dataVencimento;
+  DateTime? dataPrimeiraParcela;
   List<Parcela> parcelas = [];
 
+  void _mostrarMensagem(String msg, int tempo) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        duration: Duration(seconds: tempo),
+      ),
+    );
+  }
+
+  void _limparCampos() {
+    setState(() {
+      totalController.text = "";
+      entradaController.text = "";
+      jurosController.text = "";
+      parcelasController.text = "";
+      dataController.text = "";
+      dataPrimeiraParcela = null;
+      parcelas = [];
+    });
+  }
+
   Future<void> _selecionarData() async {
-    final DateTime? data_escolhida = await showDatePicker(
+    final DateTime? dataEscolhida = await showDatePicker(
       context: context,
       initialDate: DateTime.now().add(const Duration(days: 30)),
-      firstDate: DateTime.now(),
+      firstDate: DateTime.now().add(const Duration(days: 30)),
       lastDate: DateTime(2101),
+      helpText: "Selecione a data da 1ª parcela",
     );
-    if (data_escolhida != null && data_escolhida != dataVencimento) {
+    if (dataEscolhida != null) {
       setState(() {
-        dataVencimento = data_escolhida;
-        dataController.text = "${dataVencimento!.day.toString().padLeft(2, '0')}/${dataVencimento!.month.toString().padLeft(2, '0')}/${dataVencimento!.year}";
+        dataPrimeiraParcela = dataEscolhida;
+        dataController.text = "${dataPrimeiraParcela!.day.toString().padLeft(2, '0')}/${dataPrimeiraParcela!.month.toString().padLeft(2, '0')}/${dataPrimeiraParcela!.year}";
       });
     }
   }
 
-  Widget criarParcela(int idx) {
+  void _calcularFinanciamento() {
+    try {
+      if (totalController.text.isEmpty || entradaController.text.isEmpty ||
+          jurosController.text.isEmpty || parcelasController.text.isEmpty ||
+          dataController.text.isEmpty) {
+        _mostrarMensagem("Por favor, preencha todos os campos.", 3);
+        return;
+      }
+
+      double total = double.parse(totalController.text);
+      double entrada = double.parse(entradaController.text);
+      double jurosMensal = double.parse(jurosController.text) / 100;
+      int numParcelas = int.parse(parcelasController.text);
+
+      if (total <= 0 || entrada < 0 || numParcelas <= 0) {
+        _mostrarMensagem("Valores numéricos inválidos.", 4);
+        return;
+      }
+
+      double saldoDevedor = total - entrada;
+      if (saldoDevedor <= 0) {
+        _mostrarMensagem("O saldo a financiar deve ser positivo.", 4);
+        return;
+      }
+
+      final double valorPrincipalParcela = saldoDevedor / numParcelas;
+      final List<Parcela> tempParcelas = [];
+      DateTime dataAtual = dataPrimeiraParcela!;
+
+      for (int i = 1; i <= numParcelas; i++) {
+        final double jurosDaParcela = saldoDevedor * jurosMensal;
+        final double valorTotalParcela = valorPrincipalParcela + jurosDaParcela;
+
+        tempParcelas.add(
+          Parcela(
+            numeroParcela: i,
+            valorParcela: valorPrincipalParcela,
+            juros: jurosDaParcela,
+            totalParcela: valorTotalParcela,
+            dataVencimento: dataAtual,
+          ),
+        );
+
+        saldoDevedor -= valorPrincipalParcela;
+        dataAtual = DateTime(dataAtual.year, dataAtual.month + 1, dataAtual.day);
+      }
+
+      setState(() {
+        parcelas = tempParcelas;
+      });
+
+    } catch (e) {
+      _mostrarMensagem("Por favor, insira valores numéricos válidos.", 3);
+    }
+  }
+
+  Widget _criarItem(int idx) {
     Parcela p = parcelas[idx];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -77,78 +155,6 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _showMessage(String msg, int time) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        duration: Duration(seconds: time),
-      ),
-    );
-  }
-
-  void _limpar() {
-    setState(() {
-      totalController.clear();
-      entradaController.clear();
-      jurosController.clear();
-      parcelasController.clear();
-      dataController.clear();
-      dataVencimento = null;
-      parcelas = [];
-    });
-  }
-
-  void _calcular() {
-    if (totalController.text.isEmpty || entradaController.text.isEmpty ||
-        jurosController.text.isEmpty || parcelasController.text.isEmpty ||
-        dataVencimento == null) {
-      _showMessage("Por favor, preencha todos os campos.", 3);
-      return;
-    }
-
-    try {
-      double total = double.parse(totalController.text);
-      double entrada = double.parse(entradaController.text);
-      double jurosMensal = double.parse(jurosController.text) / 100;
-      int numParcelas = int.parse(parcelasController.text);
-
-      if (total <= 0 || entrada < 0 || jurosMensal < 0 || numParcelas <= 0) {
-        _showMessage("Valores numéricos inválidos.", 4);
-        return;
-      }
-
-      double saldoDevedor = total - entrada;
-      double valorPrincipalParcela = (total - entrada) / numParcelas;
-      List<Parcela> tempParcelas = [];
-      DateTime dataAtual = dataVencimento!;
-
-      for (int i = 1; i <= numParcelas; i++) {
-        double jurosDaParcela = saldoDevedor * jurosMensal;
-        double valorTotalParcela = valorPrincipalParcela + jurosDaParcela;
-
-        dataAtual = DateTime(dataAtual.year, dataAtual.month + 1, dataAtual.day);
-
-        tempParcelas.add(
-          Parcela(
-            numeroParcela: i,
-            valorParcela: valorPrincipalParcela,
-            juros: jurosDaParcela,
-            totalParcela: valorTotalParcela,
-            dataVencimento: dataAtual,
-          ),
-        );
-        saldoDevedor -= valorPrincipalParcela;
-      }
-
-      setState(() {
-        parcelas = tempParcelas;
-      });
-
-    } catch (e) {
-      _showMessage("Por favor, insira valores numéricos válidos.", 3);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,6 +175,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                         child: TextField(
                           controller: totalController,
+                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(labelText: "Valor Total (R\$)"),
                         ),
                       ),
@@ -176,6 +183,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                         child: TextField(
                           controller: entradaController,
+                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(labelText: "Entrada (R\$)"),
                         ),
                       ),
@@ -187,6 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                         child: TextField(
                           controller: jurosController,
+                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(labelText: "Juros (%)"),
                         ),
                       ),
@@ -194,6 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       Expanded(
                         child: TextField(
                           controller: parcelasController,
+                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(labelText: "Parcelas"),
                         ),
                       ),
@@ -203,11 +213,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           children: [
                             Expanded(
                               child: TextField(
-                                controller: dataController, // Adicionado o novo TextField
+                                controller: dataController,
                                 decoration: const InputDecoration(
                                   labelText: "1ª Parcela",
                                 ),
-                                readOnly: true, // Impede que o usuário digite
+                                readOnly: true,
                               ),
                             ),
                             IconButton(
@@ -228,13 +238,13 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 ElevatedButton.icon(
-                  onPressed: _calcular,
+                  onPressed: _calcularFinanciamento,
                   icon: const Icon(Icons.check),
                   label: const Text("Calcular"),
                 ),
                 const SizedBox(width: 20),
                 ElevatedButton.icon(
-                  onPressed: _limpar,
+                  onPressed: _limparCampos,
                   icon: const Icon(Icons.cancel_outlined),
                   label: const Text("Limpar"),
                 ),
@@ -246,7 +256,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.all(16.0),
                 child: ListView.builder(
                   itemCount: parcelas.length,
-                  itemBuilder: (ctx, idx) => criarParcela(idx),
+                  itemBuilder: (ctx, idx) => _criarItem(idx),
                 ),
               ),
             ),
