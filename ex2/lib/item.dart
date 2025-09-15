@@ -1,7 +1,7 @@
 class Item {
-  String? descricao;
+  String? nome;
   double? valor;
   bool? executado;
 
-  Item(this.descricao, this.valor, this.executado);
+  Item(this.nome, this.valor, this.executado);
 }
