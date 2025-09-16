@@ -11,7 +11,6 @@ class Agendamento {
   double? valorTotal;
   bool? recebido;
   bool? cancelado;
-
   List<Item>? servicos;
 
   Agendamento(this.descricao, this.clienteNome, this.clienteEndereco, this.clienteTelefone,

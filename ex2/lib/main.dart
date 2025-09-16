@@ -608,7 +608,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   width: 100,
                   child: TextField(
                     controller: itemValorController,
-                    keyboardType: TextInputType.number,
                     decoration: const InputDecoration(labelText: "Valor"),
                   ),
                 ),
